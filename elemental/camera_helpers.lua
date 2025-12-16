@@ -202,24 +202,50 @@ end
 	
 	-- 1) WORLD POS HELPER (drop in once, near get_abs_pos)
 	
-	-- returns WORLD coords for an element + local offsets
-	-- works whether the element is world-space or UI/screen-space
-	function get_world_pos(e, ox, oy)
-	  cam = cam or {x=0,y=0}
-	  ox = ox or 0
-	  oy = oy or 0
-	
-	  local x = (e and e.pos and e.pos.x) or 0
-	  local y = (e and e.pos and e.pos.y) or 0
-	
-	  -- if element is NOT world-space, treat pos as SCREEN and convert to WORLD
-	  if not (e and (e.world==true or e.space=="world")) then
-	    x += cam.x or 0
-	    y += cam.y or 0
-	  end
-	
-	  return x + ox, y + oy
-	end
+        -- returns WORLD coords for an element + local offsets
+        -- works whether the element is world-space or UI/screen-space
+        function get_world_pos(e, ox, oy)
+          cam = cam or {x=0,y=0}
+          ox = ox or 0
+          oy = oy or 0
+
+          local ax, ay = get_abs_pos(e)
+
+          -- allow get_abs_pos to return {x=,y=} or { [1]=x,[2]=y }
+          if type(ax) == "table" then
+            local t = ax
+            ax = t.x or t[1]
+            ay = t.y or t[2]
+          end
+
+          ax = ax or 0
+          ay = ay or 0
+
+          -- if element is NOT world-space, treat pos as SCREEN and convert to WORLD
+          if not (e and (e.world==true or e.space=="world")) then
+            ax += cam.x or 0
+            ay += cam.y or 0
+          end
+
+          return ax + ox, ay + oy
+        end
+
+        -- returns SCREEN coords for an element + local offsets
+        -- world elements have camera applied; UI elements ignore camera
+        function get_screen_pos(e, ox, oy)
+          cam = cam or {x=0,y=0}
+          ox = ox or 0
+          oy = oy or 0
+
+          local x, y = get_world_pos(e, ox, oy)
+
+          if e and (e.world == true or e.space == "world") then
+            x -= cam.x or 0
+            y -= cam.y or 0
+          end
+
+          return x, y
+        end
 	
 	-- call every frame after player moves
 function u_camera_follow_player()

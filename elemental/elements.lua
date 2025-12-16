@@ -806,18 +806,23 @@ end
 	    y += e.hover_offset_y or 0
 	  end
 	
-	  if e.anim_type then
-	    x += e.anim_offset_x or 0
-	    y += e.anim_offset_y or 0
-	  end
-	
-	  if e.element_offset then
-	    x += e.element_offset.x or 0
-	    y += e.element_offset.y or 0
-	  end
-	
-	  return x, y
-	end
+          if e.anim_type then
+            x += e.anim_offset_x or 0
+            y += e.anim_offset_y or 0
+          end
+
+          if e.element_offset then
+            x += e.element_offset.x or 0
+            y += e.element_offset.y or 0
+          end
+
+          if e.draw_offset then
+            x += e.draw_offset.x or 0
+            y += e.draw_offset.y or 0
+          end
+
+          return x, y
+        end
 	
 	
 	  --------------------------------------------------------

@@ -1280,24 +1280,71 @@
 ---
 
 
-	function elem_world_xy(e)
-  -- IMPORTANT: no camera subtraction here
-  local x = e.x or 0
-  local y = e.y or 0
-  if e.parent then
-    local px, py = elem_world_xy(e.parent)
-    x += px
-    y += py
+        function elem_world_xy(e)
+  -- world position with parent resolution (no camera subtraction)
+  if not e then return 0, 0 end
+
+  -- honor the same positioning rules used by ui drawing
+  local x, y = get_abs_pos(e)
+
+  -- allow get_abs_pos to return a table
+  if type(x) == "table" then
+    local t = x
+    x = t.x or t[1] or 0
+    y = t.y or t[2] or 0
   end
-  return x, y
+
+  return x or 0, y or 0
 end
 
+-- world collision helper that respects radius/size fields used by ui elements
 function elems_collide_world(a, b)
-  local ax, ay = elem_world_xy(a)
-  local bx, by = elem_world_xy(b)
-  local aw, ah = a.w or 0, a.h or 0
-  local bw, bh = b.w or 0, b.h or 0
-  return ax < bx + bw and ax + aw > bx and ay < by + bh and ay + ah > by
+  if not a or not b then return false end
+
+  local function rects_overlap(x1,y1,x2,y2, rx1,ry1,rx2,ry2)
+    return not (x2 < rx1 or rx2 < x1 or y2 < ry1 or ry2 < y1)
+  end
+
+  local function circ_circ_overlap(x1,y1,r1, x2,y2,r2)
+    local dx = x2 - x1
+    local dy = y2 - y1
+    local rr = r1 + r2
+    return (dx*dx + dy*dy) <= rr*rr
+  end
+
+  local function circ_rect_overlap(cx,cy,r, x1,y1,x2,y2)
+    local closest_x = mid(x1, cx, x2)
+    local closest_y = mid(y1, cy, y2)
+    return ((cx - closest_x)^2 + (cy - closest_y)^2) <= r*r
+  end
+
+  local function elem_shape_world(e)
+    local x, y = elem_world_xy(e)
+
+    local r = e.radius or e.r
+    if r then
+      return "circ", x, y, r
+    end
+
+    local w = (e.size and e.size.w) or e.w or 0
+    local h = (e.size and e.size.h) or e.h or 0
+    return "rect", x, y, x + w, y + h
+  end
+
+  local t1,a1,b1,c1,d1 = elem_shape_world(a)
+  local t2,a2,b2,c2,d2 = elem_shape_world(b)
+
+  if t1 == "rect" and t2 == "rect" then
+    return rects_overlap(a1,b1,c1,d1, a2,b2,c2,d2)
+  elseif t1 == "circ" and t2 == "circ" then
+    return circ_circ_overlap(a1,b1,c1, a2,b2,c2)
+  elseif t1 == "circ" and t2 == "rect" then
+    return circ_rect_overlap(a1,b1,c1, a2,b2,c2,d2)
+  elseif t1 == "rect" and t2 == "circ" then
+    return circ_rect_overlap(a2,b2,c2, a1,b1,c1,d1)
+  end
+
+  return false
 end
 	------------------------------------------------------------
 	-- get_abs_pos

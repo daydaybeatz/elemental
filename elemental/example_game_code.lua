@@ -661,8 +661,7 @@ hide=true,
   size={w=16,h=16},
 
   draw=function(self,x,y)
-    spr(19,self.pos.x,y)
-print(x.." "..y,x,y,8)
+    spr(19, x, y)
   end,
 
 c_func=function(self, other, wx, wy, sx, sy)
@@ -784,7 +783,6 @@ function i_bullet(owner, dir_x, dir_y, kind)
     draw=function(self, x, y)
       -- x,y are SCREEN coords when world=true (camera already applied by UI system)
       circfill(x, y, self.radius, BULLET_TYPES[self.data.type_key].color)
-		print(self.pos.x.." "..self.pos.y,self.pos.x,self.pos.y,8)
     end
   })
 end
